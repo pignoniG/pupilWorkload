@@ -121,7 +121,7 @@ def readLux(recording_source,data_source,recStartTime,recEndTime):
 	lux_data_source=data_source+"/SD_dump"
 	os.path.normpath(lux_data_source)
 	
-	correction = 3600
+	correction = 3600*2
 	coeff = 0.001
 
 	if not(os.path.isdir(lux_data_source) ):
@@ -153,8 +153,9 @@ def readLux(recording_source,data_source,recStartTime,recEndTime):
 				for row in csvReader:
 					
 					x=float(row[4])
-					y = 1.706061*x + 0.66935
+					x = 1.706061*x + 0.66935
 					y= x/2.2
+					
 
 					
 					
@@ -333,7 +334,7 @@ def drawDistance( pupilValuesA,pupilValuesB,recTimeStamps,sampleLenght ,calcType
 		if sEnd >= lenPupilArray :
 			sEnd = lenPupilArray -1
 
-		print(sample, "of", sampleNumber)
+		#print(sample, "of", sampleNumber)
 		#print(sStart, "to", sEnd)
 		#print(sStartII, "to", sEndII)
 		
@@ -419,12 +420,12 @@ def drawDistance( pupilValuesA,pupilValuesB,recTimeStamps,sampleLenght ,calcType
 					
 	
 	dtw_dist=interpnan (dtw_dist)
-	dtw_dist_smoothed = savgol_filter(np.array(dtw_dist), 120+1, 3) # filtered set of diff dyameters
+	dtw_dist_smoothed = savgol_filter(np.array(dtw_dist), 40+1, 1) # filtered set of diff dyameters
 	
 	
-	dtw_WLstd = np.nanstd(dtw_dist)
-	dtw_WLvar = np.nanvar(dtw_dist)
-	dtw_WLmean = np.nanmean(dtw_dist)
+	dtw_WLstd = np.nanstd(dtw_dist_smoothed)
+	dtw_WLvar = np.nanvar(dtw_dist_smoothed)
+	dtw_WLmean = np.nanmean(dtw_dist_smoothed)
 	
 	print ("Standard deviation" , dtw_WLstd )
 	print ("Variance" , dtw_WLvar )
@@ -435,7 +436,7 @@ def drawDistance( pupilValuesA,pupilValuesB,recTimeStamps,sampleLenght ,calcType
 	plt.axhline(y=dtw_WLmean  , color='black', linestyle='-',linewidth=0.3)
 	plt.axhline(y=dtw_WLmean+ dtw_WLstd  , color='black', linestyle='-',linewidth=0.3)
 	
-	return dtw_dist,dtw_time
+	return dtw_dist_smoothed ,dtw_time
 
 
 def findDistanceSection(sections,distanceTime,timeCorrection):
@@ -509,3 +510,45 @@ def findClosestLuxVal( currTimeStamp, luxValuesList ):
        return before,pos - 1
 
 
+def findClosest( currTimeStamp, luxValuesList ):
+
+    #find the two closest lux values (closest in the time domain) in the list
+
+    pos = bisect_left(luxValuesList, currTimeStamp)
+
+
+    if pos == 0:
+        return luxValuesList[0],pos
+    if pos == len(luxValuesList):
+        return luxValuesList[-1],pos
+
+    before = luxValuesList[pos - 1]
+    after = luxValuesList[pos]
+
+    if after - currTimeStamp < currTimeStamp - before:
+       return after,pos
+    else:
+       return before,pos - 1
+
+def findClosestsAndIterpolate( currTimeStamp , luxTimeStamps , luxValues ):
+    
+    pos = bisect_left(luxTimeStamps, currTimeStamp)
+    if pos == 0:
+        return luxValues[0]
+
+    if pos == len(luxTimeStamps):
+        return luxValues[-1]
+
+    
+    beforeLux =  luxValues[pos - 1]
+    afterLux =  luxValues[pos]
+    
+    beforeTime =  luxTimeStamps[pos - 1]
+
+    afterTime =  luxTimeStamps[pos]
+
+    timeSpan = afterTime - beforeTime
+
+    interLux = ((currTimeStamp - beforeTime)/timeSpan) *  afterLux+ ((afterTime - currTimeStamp)/timeSpan) *beforeLux 
+    
+    return interLux

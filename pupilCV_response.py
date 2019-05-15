@@ -20,18 +20,21 @@ home = expanduser("~")
 
 ##### define the recordings folder
 
+#data_source="/Users/giovanni/Desktop/local_recording/20190225123115316
+#recording_source=home+"/recordings/"
+recording_source=home+"/Dropbox/recordings/"
+ecording_source=home+"/Desktop/"
 
-recording_source=home+"/recordings/Navigator/"
-recording_source=home+"/recordings/Assistant/"
+#recording_source="/Users/Giovanni/Desktop/local_recording"
+#recording_name+=-"20190323124155554"
 
-recording_name="A5B"
-
-
+recording_name="3"
+age 		  = 61
 data_source=recording_source+recording_name
 
 
 export_source=data_source+"/exports/000"
-export_source_alt=home+"/recordings/all_data"
+export_source_alt=home+"/Dropbox/recordings/all_data"
 
 
 
@@ -39,26 +42,22 @@ export_source_alt=home+"/recordings/all_data"
 
 
 fig, ax = plt.subplots(figsize=(20,10))
-ax.set_ylim(-5, 10)
-
+ax.set_ylim(-1, 10)
 age = 26
 referenceAge = 28.58 
 nOfEye = 2
-fieldAngle = 167
+fieldAngle = 190
 
 ##### unified pupil size #####
 
 
 pupil_data_mm = False
-#force_pupilLum_coeff= 1/16.76
-force_pupilLum_coeff= False
 wl_baseline =0
 useLux = True
-useCamera = True
+useCamera = False
 verbose = True
 confidence_treshold = 0.6
 filterForConf = True
-
 
 
 ##### end cofig #####
@@ -70,33 +69,29 @@ filterForConf = True
 
 
 timelag = 0
-#timelag = 63 # resincronize data from the external lux loggher
-#distSampleLenght = 120#(eye_frames 120fps)
+#timelag = 321+1.408 # resincronize data from the external lux loggher
+distSampleLenght = 60#(eye_frames 120fps)
 sampleFreq = 120
-distSampleLenght = 1*sampleFreq#(eye_frames 120fps)
-sampleFreqCamera = 30
+sampleFreqCamera = 60
 drawDist = True
-distanceType = "linear"# "DTW" "euclidean" "sqeuclidean"
+distanceType = "linear"# "DTW" "eucledian" "sqeuclidean"
 drawConfidence = False
-
 exportCsv = True
 exportDistance = True
-drawSections =True
+drawSections = True
 
-showPlot= True
-
-bandstop_filter =False
+bandstop_filter = False
 ##### read recond info #####
 
 
 if pupil_data_mm :
 	pupil_coulmn = 13 # 13 in mm 6 in px
-	pupil_offset = 0
+	pupil_offset=0
 	
 
 else:
 	pupil_coulmn = 6 # 13 in mm 6 in px
-	pupil_offset = 0
+	pupil_offset= 0
 
 
 pupilData = readPupil(export_source)
@@ -172,19 +167,12 @@ if useLux:
 	stdLux = np.nanstd(luxPupilValues)
 	stdRec = np.nanstd(recPupilValues_filter)
 	
-	pupil_coeff = meanLux / meanRec
+	pupil_coeff = meanLux/ meanRec
 
-	#pupil_coeff = ( meanLux-stdLux )/ (meanRec - stdRec ) 
-
-
-	if verbose:
-		print("calculated pupil_coeff=",pupil_coeff )
-
-	if force_pupilLum_coeff :
-		pupil_coeff=force_pupilLum_coeff 
+	pupil_coeff = ( meanLux-stdLux )/ (meanRec - stdRec ) 
 
 	if verbose:
-		print("effective pupil_coeff=",pupil_coeff )
+		print("pupil_coeff=",pupil_coeff )
 
 	recPupilValues_scaled = [x * pupil_coeff  for x in recPupilValues]
 	recPupilValues_translated = [x * pupil_coeff +  wl_baseline for x in recPupilValues]
@@ -197,7 +185,7 @@ if useLux:
 		recPupilValues_filter_bandstop_translated = [x * pupil_coeff - meanLux for x in recPupilValues_filter_bandstop]
 		recSimpleTimeStamps_bandstop= [x - 7.2  for x in recSimpleTimeStamps]
  
-		graphPlot(recSimpleTimeStamps_bandstop,recPupilValues_filter_bandstop_translated ,"orange",1,"Bandstop Filter Cognitive Wl")
+		graphPlot(recSimpleTimeStamps_bandstop,recPupilValues_filter_bandstop_translated ,"gray",0.8,"Bandstop Filter Cognitive Wl")
 
 	
 
@@ -232,8 +220,8 @@ if useCamera:
 		cameraALum= avgLum[i] 
 		cameraSLum= spotLum[i]
 
-		cameraLum_min= sensorLux / (cameraALum *10+1)
-		cameraLum_max= cameraLum_min * 11 
+		cameraLum_min= sensorLux / (cameraALum *1000+1)
+		cameraLum_max= cameraLum_min * 1001 
 
 		#scaledSpot = (sensorLux * cameraSLum )/ cameraALum # proportion method
 
@@ -253,13 +241,10 @@ if useCamera:
 	stdLum= np.nanstd(spotPupilValues)
 	stdRec = np.nanstd(recPupilValues_filter)
 	pupilLum_coeff = meanLum/meanRec
+	pupilLum_coeff = ( meanLum-stdLum )/ (meanRec - stdRec )
+	
 	if verbose:
 		print("pupilLum_coeff=",pupilLum_coeff )
-	if force_pupilLum_coeff :
-		pupilLum_coeff=force_pupilLum_coeff 
-	#pupilLum_coeff = ( meanLum-stdLum )/ (meanRec - stdRec )
-	
-	
 
 	recPupilValues_filter_scaled_Lum = [x * pupilLum_coeff for x in recPupilValues_filter]
 
@@ -312,11 +297,7 @@ if drawSections:
 	timeCorrection=recStartTimeAlt+bootTime.timestamp()
 
 	sections  = loadSections(data_source)
-
-
 	if len(sections)==0:
-		
-
 		step=60
 
 		for x in range(0,int(int(recDurationSeconds.total_seconds())/step)):
@@ -327,8 +308,7 @@ if drawSections:
 			if x% 2 == 0: diff=1
 			else: diff=1
 
-			sections.append((beg,end,diff,"none","none"))
-
+			sections.append((beg,end,diff,"none"))
 
 	drawRecSections(sections,timeCorrection,distanceVal,distanceTime)
 	
@@ -368,9 +348,8 @@ if exportCsv:
 
 
 	if exportDistance:
-		csv_header = ["distanceVal","distanceTime","recording_name","age","distanceTimeEpoch"]
-		distanceTimeEpoch= [x +float(recordingInfo["Start Time (System)"]) for x in distanceTime ]
-		csv_rows   = [distanceVal,distanceTime,recording_name,age,distanceTimeEpoch]
+		csv_header = ["distanceVal","distanceTime","recording_name","age"]
+		csv_rows   = [distanceVal,distanceTime,recording_name,age]
 
 		if drawSections:
 			csv_header.append("section")
@@ -381,14 +360,11 @@ if exportCsv:
 			csv_rows.append(distanceNameList)
 			csv_rows.append(distanceConditionList)
 
-		saveCsv(export_source_alt,recording_name+"_pupilOutputDistance.csv",csv_header,csv_rows)
-
-
 
 	saveCsv(export_source,"pupilOutputDistance.csv",csv_header,csv_rows)
-if showPlot:
-		plt.show()
+	saveCsv(export_source_alt,recording_name+"_pupilOutputDistance.csv",csv_header,csv_rows)
 
+plt.show()
 
 
 

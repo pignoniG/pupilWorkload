@@ -20,7 +20,6 @@ from os.path import expanduser
 #
 #####
 
-
 cv2.ocl.setUseOpenCL(True)
 home = expanduser("~")
 
@@ -28,14 +27,13 @@ home = expanduser("~")
 
 # Select the input file relative to the home folder
 
-#data_source=home+"/recordings/10"
-data_source=home+"/Dropbox/recordings/2"
-#data_source=home+"/Desktop/20190323124155554"
-#data_source=home+"/Desktop/20190322161505205"
+data_source=home+"/recordings/Navigator/N4B"
+#data_source=home+"/recordings/Assistant/A1B"
 
+print(data_source)
 export_source=data_source+"/exports/000"
 
-showVideo=True #See what the algorithm is doing
+showVideo=False #See what the algorithm is doing
 
 #The video resolution is automatically read from the info.csv file if available 
 video_w=1280
